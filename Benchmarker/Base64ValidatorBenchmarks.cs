@@ -7,12 +7,23 @@ namespace Benchmarker;
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
 public class Base64ValidatorBenchmarks {
-    private const string ValidTestStr1 = "abc1";
+    [Params("asdGHJ987=","asd^IUY02+", "asdGHJ987=iuy816OIP+nkwSOQ015/asdGHJ987=iuy816OIP+nkwSOQ015/")]
+    public string TestString { get; set; } = "";
     private static readonly Base64Validator Validator = new();
     
     [Benchmark]
-    public void ValidateTestString()
+    public void Validate_Naive()
     {
-        Validator.Validate_Naive(ValidTestStr1);
+        Validator.Validate_Naive(TestString);
+    }
+    [Benchmark]
+    public void Validate_Span()
+    {
+        Validator.Validate_Span(TestString);
+    }
+    [Benchmark]
+    public void Validate()
+    {
+        Base64Validator.Validate(TestString);
     }
 }
