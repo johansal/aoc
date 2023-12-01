@@ -3,7 +3,7 @@
 namespace day1;
 public class Program {
     private static readonly string[] validStrs = [
-        "1","2","3","4","5","6","7","8","9","0",
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"
     ];
 
@@ -43,9 +43,10 @@ public class Program {
             {
                 if (line.StartsWith(validStrs[i])) 
                 {
-                    int value = int.TryParse(validStrs[i], out int v) ? v : i - 9;
+                    int value = i < 10 ? i : i - 9;
                     first ??= value;
                     last = value;
+                    break;
                 }
             }
 
