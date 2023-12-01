@@ -11,4 +11,8 @@
     <PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="C:\git\aoc23\day1\bin\Release\net8.0\day1.dll" />
+  </ItemGroup>
+
 </Project>
