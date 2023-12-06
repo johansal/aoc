@@ -33,7 +33,7 @@ public class Day5 {
             }
         }
         Console.WriteLine("[{0}]", string.Join(", ", seeds));
-        Console.WriteLine("Part1: " + seeds.Min());
+        Console.WriteLine("Part1: " + MinStr(seeds));
     }
     private static string ConvertSeed(string seed, string[] map, ref bool found)
     {
@@ -50,6 +50,15 @@ public class Day5 {
             }
         }
         return seed;
+    }
+    public static string MinStr(string[] values) {
+        string min = values[0];
+        for (int i = 1; i < values.Length; i++)
+        {
+            if(IsGreater(min, values[i]) == 1)
+                min = values[i];
+        }
+        return min;
     }
     public static string SubtractStr(string value, string subtractor)
     {
