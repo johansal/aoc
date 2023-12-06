@@ -3,7 +3,59 @@
 public class Day5 {
     public static void Main() 
     {
-        var input = File.ReadAllLines("inputs/input");
+        //Part1("test");
+        Part2("test");
+    }
+    private static void Part2(string file)
+    {
+        //parse input to almanac
+        var input = File.ReadAllLines($"inputs/{file}");
+        var tmpSeeds = input[0].Split(": ")[1].Split(" ");
+        List<(string seed, string range)> seeds = [];
+        for(int i = 0; i < tmpSeeds.Length-1; i += 2) {
+            seeds.Add((tmpSeeds[i],tmpSeeds[i+1]));
+        }
+        List<(string seed, string range)> converted = [];
+        List<List<(string destination, string source, string range)>> almanac = [];
+        List<(string destination, string source, string range)> mapList = [];
+        for(int i = 2; i < input.Length; i++)
+        {
+            if(input[i].Contains("map"))
+            {
+                mapList = [];
+            }
+            else if (string.IsNullOrEmpty(input[i])) {
+                almanac.Add(mapList);
+            }
+            else {
+                var tmpMap = input[i].Split(" ");
+                mapList.Add((tmpMap[0], tmpMap[1], tmpMap[2]));
+            }
+        }
+        almanac.Add(mapList);
+        
+        foreach(var list in almanac) {
+            while (seeds.Count > 0) 
+            {
+                foreach(var map in list) {
+                    /*
+                    seed > source ?
+                    (seed - source) < range ?
+                    return destination + (seed - source)
+                    (seed - source) + range2 <= range ?
+                        true: return range2 
+                        false: add new seed destination + range, new range ((seed - source) + range2)-range
+
+                    */
+                }
+                seeds.RemoveAt(0);
+            }
+        }       
+    }
+
+    private static void Part1(string file)
+    {
+        var input = File.ReadAllLines($"inputs/{file}");
         var seeds = input[0].Split(": ")[1].Split(" ");
         bool[] found = new bool[seeds.Length];
         for(int i = 1; i < input.Length; i++)
