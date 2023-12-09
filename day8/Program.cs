@@ -37,20 +37,41 @@ public class Day8 {
         }
         Console.WriteLine("Part1: " + steps);
 */
-
-        steps = 0;
-        while(part2Nodes.Any(x => x[^1] != 'Z'))
+        List<(int end, int l)> loopLengths = [];
+        for(int i = 0; i < part2Nodes.Count; i++) 
         {
+            steps = 0;
+            var og = part2Nodes[i];
             var sibling = instructions[steps % instructions.Length] == 'L' ? 0 : 1;
-            for(int i = 0; i < part2Nodes.Count; i++)
-            {              
-                part2Nodes[i] = nodes[part2Nodes[i]][1..^1].Split(", ")[sibling];
-            }
+            var tmp = nodes[og][1..^1].Split(", ")[sibling];
+            List<(string,int)> visited = [];
+            List<int> endNodes = [];
+            visited.Add((og, steps % instructions.Length));
             steps++;
+            var pos = steps % instructions.Length;
+            while (!visited.Contains((tmp,pos))) //fix this
+            {
+                if(tmp[^1] == 'Z')
+                    endNodes.Add(steps);
+                visited.Add((tmp, pos));
+                sibling = instructions[pos] == 'L' ? 0 : 1;
+                tmp = nodes[tmp][1..^1].Split(", ")[sibling];
+                steps++;
+                pos = steps % instructions.Length;
+            }
+            Console.WriteLine("Loop at step " + steps + " endnodes at steps: " + string.Join(',',endNodes) + ", loop start on step " + visited.IndexOf((tmp,pos)));
+            loopLengths.Add((endNodes[0],steps-visited.IndexOf((tmp,pos))));
+        }        
+        //calculate when loops are all at their end nodes
+        /*
+        end1 + length1 * x1 = Z
+        end2 + length1 * x2 = Z
+        end3 + length3 * x3 = Z
+        */
+        long Z = loopLengths[4].end + loopLengths[4].l;
+        while(loopLengths.Any(x => Z-x.end % x.l != 0)) {
+            Z +=loopLengths[4].l;
         }
-        Console.WriteLine("Part2: " + steps);
+        Console.WriteLine("Part2: " + Z);
     }
-
-    public 
 }
-
