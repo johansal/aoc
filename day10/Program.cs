@@ -32,7 +32,7 @@ public class Day10 {
             }
             newNeighbours = valids.Where(x => visited.Contains(x) == false).ToList();
         }
-        Console.WriteLine($"Part1: {fartestPoint}");
+        Console.WriteLine($"Part1: {fartestPoint}"); //6599
 
         //foreach tile that is not in the loop, check if you can get to the edge
         //if not, it could be Bobers nest
@@ -44,19 +44,41 @@ public class Day10 {
             {
                 if(visited.Contains((i,j)) == false)
                 {
-                    List<(int x, int y)> notVisited = [(i,j)];
-                    //add neighbours that are not visited
+                    List<(int x, int y)> area = [(i,j)];
+                    valids = GetNeighbours((i,j), input.Length, input[0].Length);
+                    newNeighbours = valids.Where(x => visited.Contains(x) == false).ToList();
+                    while(newNeighbours.Count > 0) 
+                    {
+                        area.AddRange(newNeighbours);
+                        valids = [];
+                        foreach(var n in newNeighbours) {
+                            valids.AddRange(GetNeighbours(n, input.Length, input[0].Length));
+                        }
+                        newNeighbours = valids.Where(x => visited.Contains(x) == false && area.Contains(x) == false).ToList();
+                    }
+
+                    if(area.Any(x => x.x == 0 || x.y == 0 || x.x == input.Length - 1 || x.y == input[0].Length - 1) == false)
+                    {
+                        nest.AddRange(area);
+                    }
+                    visited.AddRange(area);
 
                 }
             }
         }
+        Console.WriteLine("Part 2:" + nest.Count);
     }
-    public static List<(int x, int y)> GetNeighBours((int x, int y) current) {
+    public static List<(int x, int y)> GetNeighbours((int x, int y) current, int mapH, int mapL) {
         List<(int x, int y)> ret = [];
-        ret.Add((current.x+1,current.y));
-        ret.Add((current.x-1,current.y));
-        ret.Add((current.x,current.y+1));
-        ret.Add((current.x,current.y-1));
+        if(current.x < mapH-1)
+            ret.Add((current.x+1,current.y));
+        if(current.x > 0)
+            ret.Add((current.x-1,current.y));
+        if(current.y < mapL-1)
+            ret.Add((current.x,current.y+1));
+        if(current.y > 0)
+            ret.Add((current.x,current.y-1));
+        return ret;
     }
 
     public static List<(int x, int y)> LoopNeighbours((int x, int y) current, string[] map) {
