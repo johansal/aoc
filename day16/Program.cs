@@ -2,16 +2,63 @@
 public class Program
 {
     private static void Main(string[] args)
-    {
-        var input = File.ReadAllLines("inputs/input");
+    {  
+        string[] input = File.ReadAllLines("inputs/input");     
         List<((int x, int y) position ,int direction)> energized = [];
         Dictionary<(int x, int y), bool> e = [];
-        (int x, int y) position = (0,0);
-        var direction = ChangeDirection(1, input[0][0]); // -> 1, v 2, <- 3, ^ 0
         List<((int x, int y) position, int direction)> beams = [];
-        beams.Add((position,direction[0]));
-        energized.Add((position, direction[0]));
+        bool part1 = false;
+        var eMax = 0;
+        if(part1) {
+            (int x, int y) position = (0,0);
+            var direction = 1;
+            Console.WriteLine(Solve(position, direction, ref input));
+        }
+        else {
+            for(int i = 0; i < input.Length; i++) 
+            {
+                (int x, int y) position = (i,0);
+                var direction = 1;
+                int value = Solve(position, direction, ref input);
+                eMax = value > eMax ? value : eMax;
+
+                position = (i,input[0].Length - 1);
+                direction = 3;
+                value = Solve(position, direction, ref input);
+                eMax = value > eMax ? value : eMax;
+            }
+
+            for(int i = 0; i < input[0].Length; i++) 
+            {
+                (int x, int y) position = (0,i);
+                var direction = 2;
+                int value = Solve(position, direction, ref input);
+                eMax = value > eMax ? value : eMax;
+
+                position = (input.Length - 1, i);
+                direction = 0;
+                value = Solve(position, direction, ref input);
+                eMax = value > eMax ? value : eMax;
+            }
+
+            Console.WriteLine(eMax);
+        }
+    }
+    private static int Solve((int x, int y) startPosition, int initialDirection, ref string[] input) {
+        List<((int x, int y) position ,int direction)> energized = [];
+        Dictionary<(int x, int y), bool> e = [];
+        List<((int x, int y) position, int direction)> beams = [];
+
+        (int x, int y) position = startPosition;
+        var direction = ChangeDirection(initialDirection, input[position.x][position.y]); // -> 1, v 2, <- 3, ^ 0
+        
+        foreach(var d in direction) 
+        {
+            beams.Add((position,d));
+            energized.Add((position, d));
+        }
         e[position] = true;
+
         while(beams.Count > 0)
         {
             List<((int x, int y) position, int direction)> newBeams = [];
@@ -33,7 +80,7 @@ public class Program
             }
             beams = newBeams;
         }
-        Console.WriteLine(e.Count);
+        return e.Count;
     }
     private static (int x, int y) Move((int x, int y) position, int direction)
     {
