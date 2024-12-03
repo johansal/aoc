@@ -3,3 +3,5 @@ obj/
 inputs/
 .vs/
 *.Artifacts/
+input
+test
