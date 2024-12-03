@@ -4,4 +4,6 @@ inputs/
 .vs/
 *.Artifacts/
 input
+input.txt
 test
+test.txt
