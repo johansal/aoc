@@ -1,205 +1,91 @@
 ﻿internal class Program
 {
-    /// <summary>
-    /// Yeah it works but not really very nice...
-    /// </summary>
-    /// <param name="args"></param>
     private static void Main(string[] args)
     {
         var input = File.ReadAllLines("input");
-        var find = "XMAS";
+
         var part1 = 0;
-        
-        var reverse = "SAMX";
-        for (int i = 0; i < input.Length; i++)
-        {       
-            var row = input[i];
-            //Console.WriteLine(row);
-            var index = row.IndexOf(find);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(find, index + 1);
-            }
-            index = row.IndexOf(reverse);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(reverse, index + 1);
-            }
-        }
-        // Check columns
-        //Console.WriteLine("Columns:");
-        for (int j = 0; j < input[0].Length; j++)
-        {
-            string row = "";
-            for (int i = 0; i < input.Length; i++)
-            {
-                row += input[i][j];
-            }
-            //Console.WriteLine(row);
-            var index = row.IndexOf(find);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(find, index + 1);
-            }
-            index = row.IndexOf(reverse);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(reverse, index + 1);
-            }
-        }
-        // Check \  first half
-        //Console.WriteLine("\\ top|");
-        for (int jStart = input[0].Length - 1; jStart >= 0; jStart--)
-        {
-            string row = "";
-            int i = 0;
-            int j = jStart;
-            while ( j < input[0].Length && i < input.Length)
-            {
-                row += input[i][j];
-                i++;
-                j++;
-            }
-            //Console.WriteLine(row);
-            var index = row.IndexOf(find);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(find, index + 1);
-            }
-            index = row.IndexOf(reverse);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(reverse, index + 1);
-            }
-        }
-        // Check \  2nd half
-        //Console.WriteLine("\\ |_bottom");
-        for (int iStart = 1; iStart < input.Length; iStart++)
-        {
-            string row = "";
-            int i = iStart;
-            int j = 0;
-            while ( j < input[0].Length && i < input.Length)
-            {
-                row += input[i][j];
-                i++;
-                j++;
-            }
-            //Console.WriteLine(row);
-            var index = row.IndexOf(find);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(find, index + 1);
-            }
-            index = row.IndexOf(reverse);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(reverse, index + 1);
-            }
-        }
-        // Check / first half
-        //Console.WriteLine("/ bottom_|");
-        for (int jStart = 1; jStart < input[0].Length; jStart++)
-        {
-            string row = "";
-            int i = input.Length - 1;
-            int j = jStart;
-            while ( j < input[0].Length && i >= 0)
-            {
-                row += input[i][j];
-                i--;
-                j++;
-            }
-            //Console.WriteLine(row);
-            var index = row.IndexOf(find);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(find, index + 1);
-            }
-            index = row.IndexOf(reverse);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(reverse, index + 1);
-            }
-        }
-        // Check / 2nd half
-        //Console.WriteLine("/ top|");
-        for (int iStart = 0; iStart < input.Length; iStart++)
-        {
-            string row = "";
-            int i = iStart;
-            int j = 0;
-            while ( j < input[0].Length && i >= 0)
-            {
-                row += input[i][j];
-                i--;
-                j++;
-            }
-            //Console.WriteLine(row);
-            var index = row.IndexOf(find);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(find, index + 1);
-            }
-            index = row.IndexOf(reverse);
-            while (index > -1)
-            {
-                //Console.WriteLine(index);
-                part1++;
-                index = row.IndexOf(reverse, index + 1);
-            }
-        }
-
-        Console.WriteLine(part1);//2569
-
-        // Find X-MAS in shape 
-        var part2 = 0;
-
         for (int i = 0; i < input.Length; i++)
         {
-            for(int j = 0; j < input[0].Length; j++)
+            for (int j = 0; j < input[i].Length; j++)
             {
-                if('A' == input[i][j])
+                for(int d = 0; d < 8; d++)
                 {
-                    // Chek corners for M&S
-                    try {
-                    if (('M' == input[i-1][j-1] && 'S' == input[i+1][j+1])||('S' == input[i-1][j-1] && 'M' == input[i+1][j+1]))
+                    if(Find("XMAS", input, i, j, d))
                     {
-                        if(('M' == input[i+1][j-1] && 'S' == input[i-1][j+1])||('S' == input[i+1][j-1] && 'M' == input[i-1][j+1]))
-                        {
-                            part2++;
-                        }
-                    }
-                    }
-                    catch (Exception)
-                    {
-                        //This is fine...
+                        part1++;
                     }
                 }
             }
         }
-        Console.WriteLine(part2);
+        Console.WriteLine("Part1: " + part1);
+        
+        var part2 = 0;
+        for (int i = 1; i < input.Length-1; i++)
+        {
+            for (int j = 1; j < input[i].Length-1; j++)
+            {
+                if(input[i][j] == 'A' && CheckX_mas(input, i, j))
+                    part2++;
+            }
+        }
+
+        Console.WriteLine("Part2: " + part2);
+    }
+
+    // Check if word is found from input starting at row i, column j, by going to direction d (0=east,1=southeast...)
+    private static bool Find(string word, string[] input, int i, int j, int d)
+    {
+        if(i < 0 || j < 0 || i >= input.Length || j >= input[0].Length || word[0] != input[i][j])
+        {
+            return false;
+        }
+        else if(word.Length == 1) 
+        {
+            return true;
+        }
+        else 
+        {
+            if (d == 0)
+                j++;
+            else if (d == 1)
+            {
+                i++;
+                j++;
+            }
+            else if (d == 2)
+                i++;
+            else if (d == 3)
+            {
+                i++;
+                j--;
+            }
+            else if (d == 4)
+                j--;
+            else if (d == 5)
+            {
+                i--;
+                j--;
+            }
+            else if (d == 6)
+                i--;
+            else if (d == 7)
+            {
+                i--;
+                j++;
+            }
+            return Find(word[1..], input, i, j , d);
+        }
+    }
+
+    // Check if A in coordinates i,j are part of X-mas in input:
+    // M S S M S S M M
+    //  A   A   A   A
+    // M S S M M M S S
+    private static bool CheckX_mas(string[] input, int i, int j)
+    {
+        List<string> find = ["MASMAS", "SAMSAM", "SAMMAS", "MASSAM"];
+        var value = $"{input[i-1][j-1]}{input[i][j]}{input[i+1][j+1]}{input[i+1][j-1]}{input[i][j]}{input[i-1][j+1]}";
+        return find.Contains(value);
     }
 }
