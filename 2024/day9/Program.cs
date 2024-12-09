@@ -1,27 +1,44 @@
-﻿internal class Program
+﻿using day9;
+
+internal class Program
 {
     private static void Main()
     {
-        using StreamReader sr = new("input");
-        List<char> content = [];
-        int id = 0;
-        bool isFile = true;
-        while (sr.Peek() >= 0)
+        string input = "input";
+
+        var part1 = Checksum(DefragmentBlocks(ReadDiskMap(input)));
+        Console.WriteLine(part1);
+
+        var part2 = Checksum(DefragmentFiles(ReadDiskMapToBlocks(input)));
+        Console.WriteLine(part2);
+    }
+    private static long Checksum(string content) {
+        long checksum = 0;
+        for(int i = 0; i < content.Length; i++)
         {
-            var digit = sr.Read() - '0';
-            if(isFile)
+            if(content[i] != '.')
+                checksum += i * (content[i] - '0');
+        }
+        return checksum;
+    }
+    private static string DefragmentFiles(List<Block> disk)
+    {
+        for(int i = disk.Count - 1; i >= 0; i--)
+        {
+            for(int j = 0; j < i; j++)
             {
-                content.AddRange(Enumerable.Repeat((char)(id+'0'), digit));
-                id++;
-                isFile = !isFile;
-            }
-            else {
-                content.AddRange(Enumerable.Repeat('.',digit));
-                isFile = !isFile;
+                if(disk[j].TryWrite(disk[i]) == 1)
+                {
+                    break;
+                }
             }
         }
-        //Console.WriteLine(string.Join("", content));
 
+        return string.Join("", disk.Select(x => x.StrContent()));
+
+    }
+    private static string DefragmentBlocks(List<char> content)
+    {
         int i = 0;
         int j = content.Count - 1;
         while(i < j)
@@ -41,14 +58,55 @@
             }
             i++;
         }
-        //Console.WriteLine(string.Join("", content));
-
-        long checksum = 0;
-        for(i = 0; i < content.Count; i++)
+        return string.Join("",content);
+    }
+    private static List<char> ReadDiskMap(string fileName)
+    {
+        using StreamReader sr = new(fileName);
+        List<char> content = [];
+        int id = 0;
+        bool isFile = true;
+        while (sr.Peek() >= 0)
         {
-            if(content[i] != '.')
-                checksum += i * (content[i] - '0');
+            var digit = sr.Read() - '0';
+            if(isFile)
+            {
+                content.AddRange(Enumerable.Repeat((char)(id+'0'), digit));
+                id++;      
+            }
+            else {
+                content.AddRange(Enumerable.Repeat('.',digit));
+            }
+            isFile = !isFile;
         }
-        Console.WriteLine(checksum);
+        return content;
+    }
+    private static List<Block> ReadDiskMapToBlocks(string fileName)
+    {
+        using (StreamReader sr = new(fileName))
+        {
+            List<Block> disk = [];
+            int id = 0;
+            bool isFile = true;
+            while (sr.Peek() >= 0)
+            {
+                var digit = sr.Read() - '0';
+                if (digit != 0) //dont add blocks of size 0
+                {
+                    Block b = new();
+                    if(isFile)
+                    {    
+                        b.Content.AddRange(Enumerable.Repeat((char)(id+'0'), digit));
+                        id++;
+                    }
+                    else {
+                        b.Content.AddRange(Enumerable.Repeat('.',digit));
+                    }
+                    disk.Add(b);
+                }
+                isFile = !isFile;
+            }
+            return disk;
+        }
     }
 }
