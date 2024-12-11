@@ -1,54 +1,61 @@
-﻿internal class Program
+﻿using System.Globalization;
+
+internal class Program
 {
     private static void Main()
     {
         var stones = File.ReadAllLines("input")[0].Split(" ").ToList();
-        for (int i = 0; i < 25; i++)
+        Dictionary<(long,int), long> known = [];
+        
+        long part1 = 0;
+        foreach(var stone in stones)
         {
-            //Console.WriteLine(string.Join(" ", stones));
-            stones = Blink(stones);
+            part1 += CountStones(int.Parse(stone), 25, known);
         }
-        Console.WriteLine(stones.Count);
-        for (int i = 25; i < 75; i++)
+        Console.WriteLine(part1);
+        
+        long part2 = 0;
+        foreach(var stone in stones)
         {
-            //Console.WriteLine(string.Join(" ", stones));
-            stones = Blink(stones);
+            part2 += CountStones(int.Parse(stone), 75, known);
         }
-        Console.WriteLine(stones.Count);
+        Console.WriteLine(part2);
     }
-    private static List<string> Blink(List<string> stones)
+    private static long CountStones(long stone, int blinks, Dictionary<(long stone, int blinks), long> known)
     {
-        List<string> result = [];
-        foreach (var stone in stones)
+        if(blinks == 0)
         {
-            if(stone == "0")
+            return 1;
+        }
+        if(stone == 0)
+        {
+            return CountStones(1, blinks-1, known);
+        }
+        else {
+            if(known.TryGetValue((stone,blinks), out var k))
             {
-                result.Add("1");
+                return k;
             }
-            else if(stone.Length % 2 == 0)
+
+            var digits = (long)Math.Floor(Math.Log10(stone)) + 1;
+            if(digits % 2 == 0)
             {
-                var tmp = stone[..(stone.Length / 2)].TrimStart('0');
-                if (string.IsNullOrEmpty(tmp))
-                {
-                    result.Add("0");
-                }
-                else {
-                    result.Add(tmp);
-                }
-                tmp = stone[(stone.Length / 2)..].TrimStart('0');
-                if (string.IsNullOrEmpty(tmp))
-                {
-                    result.Add("0");
-                }
-                else {
-                    result.Add(tmp);
-                }
+                //Console.WriteLine(stone + " has " + digits + " digits");
+                long stoneCount = 0;
+                var div = (long) Math.Pow(10, digits/2);
+                var tmp = stone / div;
+                var firstPath = CountStones(tmp, blinks-1, known);
+                stoneCount += firstPath;
+                known[(tmp, blinks-1)] = firstPath;
+                tmp = stone % div;
+                var nextPath = CountStones(tmp, blinks-1, known);
+                stoneCount += nextPath;
+                known[(tmp, blinks-1)] = nextPath;
+                return stoneCount;
             }
             else {
-                var tmp = long.Parse(stone) * 2024;
-                result.Add(tmp.ToString());
-            }           
-        }
-        return result;
+                return CountStones(stone * 2024, blinks-1, known);
+            }         
+        }       
     }
 }
