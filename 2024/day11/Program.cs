@@ -27,34 +27,38 @@ internal class Program
         {
             return 1;
         }
+        // Calculate next stone only if we havent previously seen it before
+        if(known.TryGetValue((stone,blinks), out var c))
+        {
+            return c;
+        }
+        // If stone 0, next stone is 1
         if(stone == 0)
         {
-            return CountStones(1, blinks-1, known);
+            var count = CountStones(1, blinks-1, known);
+            known[(stone, blinks)] = count;
+            return count;
         }
+        // If stone.len % 2 = 0, split the stone, else * 2024
         else {
-            if(known.TryGetValue((stone,blinks), out var k))
-            {
-                return k;
-            }
-
-            var digits = (long)Math.Floor(Math.Log10(stone)) + 1;
+            var digits = (long)Math.Log10(stone) + 1;
             if(digits % 2 == 0)
             {
-                //Console.WriteLine(stone + " has " + digits + " digits");
-                long stoneCount = 0;
+                // Calculate first half of stone
                 var div = (long) Math.Pow(10, digits/2);
-                var tmp = stone / div;
-                var firstPath = CountStones(tmp, blinks-1, known);
-                stoneCount += firstPath;
-                known[(tmp, blinks-1)] = firstPath;
-                tmp = stone % div;
-                var nextPath = CountStones(tmp, blinks-1, known);
-                stoneCount += nextPath;
-                known[(tmp, blinks-1)] = nextPath;
-                return stoneCount;
+                var half = stone / div;
+                var firstPath = CountStones(half, blinks-1, known);
+                known[(half, blinks-1)] = firstPath;
+                // Calculate 2nd half of stone
+                half = stone % div;
+                var nextPath = CountStones(half, blinks-1, known);
+                known[(half, blinks-1)] = nextPath;
+                return firstPath + nextPath;
             }
             else {
-                return CountStones(stone * 2024, blinks-1, known);
+                var nextPath = CountStones(stone * 2024, blinks-1, known);
+                known[(stone, blinks)] = nextPath;
+                return nextPath;
             }         
         }       
     }
