@@ -1,11 +1,13 @@
-﻿internal class Program
+﻿public class Program
 {
     private static void Main(string[] args)
     {
+        const long k = 10000000000000;
         var input = File.ReadLines("input");
         (int x, int y) a = (0,0);
         (int x, int y) b = (0,0);
-        int part1 = 0;
+        long part1 = 0;
+        long part2 = 0;
         foreach (var line in input)
         {
             if (line.StartsWith("Button")) {             
@@ -25,14 +27,12 @@
                 var x = Parse(spl[1]);
                 var y = Parse(spl[2]);
                 // Solve
-                int cheapest = Solve(a, b, (x,y));
-                if (cheapest != int.MaxValue)
-                {
-                    part1 += cheapest;
-                }
+                part1 += Solve(a, b, (x,y));
+                part2 += Solve(a, b, (k+x,k+y));
             }
         }
         Console.WriteLine(part1);
+        Console.WriteLine(part2);
     }
     private static int Parse(string value)
     {
@@ -40,18 +40,27 @@
             return int.Parse(value[2..^1]);
         return int.Parse(value[2..]);
     }
-    private static int Solve((int i, int j) a, (int i, int j) b, (int i, int j) p)
+    private static long Solve((int i, int j) a, (int i, int j) b, (long i, long j) p)
     {
-        int min = int.MaxValue;
-        for (int x = 1; x <= 100; x++)
+        // a.i * x + b.i * y = p.i
+        // a.j * x b.j * y = p.j
+
+        // A = [[a.i,b.i], B = [[p.i], X = [[x],
+        //      [a.j,b,j]]      [p.j]]      [y]]
+        // A X = B <=> X = A- B
+        
+        int detA = (a.i * b.j) - (b.i * a.j);
+        /*int[][] adjA = [[b.j, -1 * b.i],
+                          [-1 * a.j, a.i]];*/
+        // Käänteismatriisi A- = 1/detA * adjA        
+        long x = ((b.j * p.i) / detA) + ((-1 * b.i * p.j) / detA);
+        long y = ((-1 * a.j * p.i) / detA) + ((a.i * p.j) / detA);
+        if(((a.i * x) + (b.i * y) == p.i) && ((a.j * x) + (b.j * y) == p.j))
         {
-            if((a.j * x) + (b.j * ((p.i - a.i * x)/b.i)) == p.j)
-            {
-                int value = x * 3 + ((p.i - (a.i * x)) / b.i);
-                if(value < min)
-                    min = value;
-            }
+            return  3 * x + y;
         }
-        return min;
+        else {
+            return 0;
+        }
     }
 }
