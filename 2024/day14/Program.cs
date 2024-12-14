@@ -1,5 +1,7 @@
 ﻿using System.Text.RegularExpressions;
+using System.Drawing;
 
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 internal class Program
 {
     private static void Main(string[] args)
@@ -16,26 +18,20 @@ internal class Program
             var (p, v) = Parse(line);
             robots.Add((p,v));
             var (x, y) = Simulate(p, v, seconds, width, height);
-            //Console.WriteLine($"{x},{y}");
             var q = Quadrant(x, y, width, height);
-            //var t = Triangle(x, y, width, height); //
-            //Console.WriteLine(t);
             part1[q] = part1[q]+1;
         }
         Console.WriteLine(part1[0] * part1[1] * part1[2] * part1[3]);
 
-        for(seconds = 1; seconds <= 10_000; seconds++) // use this to just render first 10 000 frames to console and hope part2 < 10 000 (it was)
+        // render first 10 000 frames to console and hope part2 < 10 000 (it was :) )
+        for(seconds = 1; seconds <= 10_000; seconds++)
         {
-            //while(Console.ReadLine() != "q") // use this to render 1 frame and wait for input for the next frame
-            //{
-                for(int i = 0; i < robots.Count; i++)
-                {
-                    var p = Simulate(robots[i].p,robots[i].v,1,width,height); 
-                    robots[i] = (p, robots[i].v);
-                }
-                Render(robots,width,height);
-                Console.WriteLine(seconds + "s");
-            //}
+            for(int i = 0; i < robots.Count; i++)
+            {
+                var p = Simulate(robots[i].p,robots[i].v,1,width,height); 
+                robots[i] = (p, robots[i].v);
+            }
+            Render(robots,width,height, $"./renders/d14_{seconds}s.png");
         }
     }
     private static ((int x, int y) p, (int x, int y) v) Parse(string line)
@@ -78,28 +74,29 @@ internal class Program
         // if robot is on the middle line return 4 as "the fift" quadrant
         return 4;
     }
+    //tried to guess wha
     private static bool Triangle(int x, int y, int w, int h) {
         var wL = w/2;
         var hL = h-x-1;
         return x >= wL-y && x <= wL+y && y >= hL;
     }
-    private static void Render(List<((int x, int y) p, (int x, int y) v)> robots, int w, int h)
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static void Render(List<((int x, int y) p, (int x, int y) v)> robots, int w, int h, string filePath)
     {
-        Console.Write('\n');
+        var b = new Bitmap(w, h);
         for (int i = 0; i <= h; i++)
         {
             for (int j = 0; j <= w; j++)
             {
                 if(robots.FindIndex(r => r.p.x == j && r.p.y == i) >= 0)
                 {
-                    Console.Write('*');
-                }
-                else {
-                    Console.Write(' ');
+                    b.SetPixel(j, i, Color.White);
                 }
             }
-            Console.Write('\n');
+
         }
+        b.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
+        b.Dispose();
     }
 
 }
