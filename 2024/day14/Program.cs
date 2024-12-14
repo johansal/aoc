@@ -23,16 +23,28 @@ internal class Program
         }
         Console.WriteLine(part1[0] * part1[1] * part1[2] * part1[3]);
 
-        // render first 10 000 frames to console and hope part2 < 10 000 (it was :) )
-        for(seconds = 1; seconds <= 10_000; seconds++)
+        // Calculate standard deviation for x and y for all robots
+        var baseline = Std(robots.Select(r => r.p).ToList());
+        seconds = 0;
+        while (true)
         {
+            // Simulate 1s
             for(int i = 0; i < robots.Count; i++)
             {
                 var p = Simulate(robots[i].p,robots[i].v,1,width,height); 
                 robots[i] = (p, robots[i].v);
             }
-            Render(robots,width,height, $"./renders/d14_{seconds}s.png");
-        }
+            seconds++;
+            // Calculate standard deviation for new positions
+            var (x, y) = Std(robots.Select(r => r.p).ToList());
+            // If the new std is lower than the baseline, render the picture
+            if(x < baseline.x - 3 && y < baseline.y - 3)
+            {
+                Console.WriteLine(seconds);
+                Render(robots,width,height, $"./renders/{seconds}s.png");
+                break;
+            }
+        } 
     }
     private static ((int x, int y) p, (int x, int y) v) Parse(string line)
     {
@@ -74,26 +86,27 @@ internal class Program
         // if robot is on the middle line return 4 as "the fift" quadrant
         return 4;
     }
-    //tried to guess wha
-    private static bool Triangle(int x, int y, int w, int h) {
-        var wL = w/2;
-        var hL = h-x-1;
-        return x >= wL-y && x <= wL+y && y >= hL;
+    private static (double x, double y) Std(List<(int x, int y)> positions) {
+        double meanX = positions.Sum(p => p.x)/positions.Count;
+        double sqrtDevsX = 0;
+        double meanY = positions.Sum(p => p.y)/positions.Count;
+        double sqrtDevsY = 0;
+        foreach (var (x, y) in positions)
+        {
+            var deviation = x - meanX;
+            sqrtDevsX += Math.Pow(deviation,2);
+            deviation = y - meanY;
+            sqrtDevsY += Math.Pow(deviation,2);
+        }
+        return (Math.Sqrt(sqrtDevsX/positions.Count),Math.Sqrt(sqrtDevsY/positions.Count));
     }
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private static void Render(List<((int x, int y) p, (int x, int y) v)> robots, int w, int h, string filePath)
     {
         var b = new Bitmap(w, h);
-        for (int i = 0; i <= h; i++)
+        foreach (var (p, _) in robots)
         {
-            for (int j = 0; j <= w; j++)
-            {
-                if(robots.FindIndex(r => r.p.x == j && r.p.y == i) >= 0)
-                {
-                    b.SetPixel(j, i, Color.White);
-                }
-            }
-
+            b.SetPixel(p.x, p.y, Color.White);
         }
         b.Save(filePath, System.Drawing.Imaging.ImageFormat.Png);
         b.Dispose();
