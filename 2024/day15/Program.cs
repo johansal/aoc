@@ -1,13 +1,12 @@
-﻿internal class Program
+﻿using day15;
+
+internal class Program
 {
     private static void Main(string[] args)
     {
         var input = File.ReadAllLines("input");
-        (int h, int w) mapSize = (-1,input[0].Length);
-        List<(int i, int j)> edges = [];
-        List<(int i, int j)> boxes = [];
-        List<(int i, int j)> spaces = [];
-        (int i, int j) robot = (-1,-1);
+        (int height, int width) = (-1,input[0].Length);
+        Map map = new();
 
         // Parse input: map & movement instructions separated by empty line
         bool isMap = true;
@@ -16,132 +15,21 @@
             var line = input[i];
             if(string.IsNullOrEmpty(line))
             {
-                mapSize.h = i;
+                height = i;
                 isMap = false;
             }
             else if(isMap)
             {
                 for(int j = 0; j < input[0].Length; j++)
                 {
-                    var cur = input[i][j];
-                    if(cur == '#')
-                    {
-                        edges.Add((i,j));
-                    }
-                    else if(cur == 'O')
-                    {
-                        boxes.Add((i,j));
-                    }
-                    else if(cur == '.')
-                    {
-                        spaces.Add((i,j));
-                    }
-                    else if(cur == '@')
-                    {
-                        robot = (i,j);
-                    }
+                    map.Add(input[i][j], i, j, 1);
                 }
             }
             else {
                 //Parse instructions on this line
                 foreach(var c in line)
                 {
-                    if(c == '>')
-                    {
-                        var edge = edges.Where(e => e.i == robot.i && e.j > robot.j).OrderBy(e => e.j).First();
-                        try {
-                            var space = spaces.Where(s => s.i == robot.i && s.j > robot.j && s.j < edge.j).OrderBy(s => s.j).First();
-                            spaces.Remove(space);
-                            spaces.Add(robot);
-                            if(robot.j + 1 == space.j)
-                            {              
-                                robot = space;
-                            }
-                            else {
-                                //Move box
-                                var box = (robot.i, robot.j + 1);
-                                boxes.Remove(box);
-                                boxes.Add(space);
-                                robot = box;
-                            }
-                        }
-                        catch(InvalidOperationException)
-                        {
-                            //No space, do nothing
-                        }
-                    }
-                    else if(c == '<')
-                    {
-                        var edge = edges.Where(e => e.i == robot.i && e.j < robot.j).OrderByDescending(e => e.j).First();
-                        try {
-                            var space = spaces.Where(s => s.i == robot.i && s.j < robot.j && s.j > edge.j).OrderByDescending(s => s.j).First();
-                            spaces.Remove(space);
-                            spaces.Add(robot);
-                            if(robot.j - 1 == space.j)
-                            {              
-                                robot = space;
-                            }
-                            else {
-                                //Move box
-                                var box = (robot.i, robot.j - 1);
-                                boxes.Remove(box);
-                                boxes.Add(space);
-                                robot = box;
-                            }
-                        }
-                        catch(InvalidOperationException)
-                        {
-                            //No space, do nothing
-                        }
-                    }
-                    else if(c == 'v')
-                    {
-                        var edge = edges.Where(e => e.j == robot.j && e.i > robot.i).OrderBy(e => e.j).First();
-                        try {
-                            var space = spaces.Where(s => s.j == robot.j && s.i > robot.i && s.i < edge.i).OrderBy(s => s.i).First();
-                            spaces.Remove(space);
-                            spaces.Add(robot);
-                            if(robot.i + 1 == space.i)
-                            {              
-                                robot = space;
-                            }
-                            else {
-                                //Move box
-                                var box = (robot.i + 1, robot.j);
-                                boxes.Remove(box);
-                                boxes.Add(space);
-                                robot = box;
-                            }
-                        }
-                        catch(InvalidOperationException)
-                        {
-                            //No space, do nothing
-                        }
-                    }
-                    else if(c == '^')
-                    {
-                        var edge = edges.Where(e => e.j == robot.j && e.i < robot.i).OrderByDescending(e => e.i).First();
-                        try {
-                            var space = spaces.Where(s => s.j == robot.j && s.i < robot.i && s.i > edge.i).OrderByDescending(s => s.i).First();
-                            spaces.Remove(space);
-                            spaces.Add(robot);
-                            if(robot.i - 1 == space.i)
-                            {              
-                                robot = space;
-                            }
-                            else {
-                                //Move box
-                                var box = (robot.i - 1, robot.j);
-                                boxes.Remove(box);
-                                boxes.Add(space);
-                                robot = box;
-                            }
-                        }
-                        catch(InvalidOperationException)
-                        {
-                            //No space, do nothing
-                        }
-                    }
+                    map.Move(c);
                     //Console.WriteLine($"Move {c}:");
                     //Print(mapSize, edges, boxes, spaces, robot);
                 }
@@ -150,7 +38,7 @@
         //Print map for test
         //Print(mapSize, edges, boxes, spaces, robot);
         var part1 = 0;
-        foreach(var box in boxes)
+        foreach(var box in map.Boxes)
         {
             part1 += Gps(box);
         }
