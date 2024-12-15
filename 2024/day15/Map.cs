@@ -45,66 +45,161 @@ namespace day15
             if(j + scale > mapSize.w)
                 mapSize.w = j + scale;
         }
-        public bool Move(char dir, (int i, int j, char c) cur) {
-            int dx;
-            int dy;
+        private (int i, int j, char c) GetNext(int dir, int i, int j)
+        {
+            int dx = 0;
+            int dy = 0;
             if(dir == '>')
             {
                 dx = 1;
-                dy = 0;
             }
             else if(dir == '<')
             {
                 dx = -1;
-                dy = 0;
             }
             else if(dir == 'v')
             {
                 dy = 1;
-                dx = 0;
             }
             else if(dir == '^')
             {
                 dy = -1;
-                dx = 0;
             }
             else {
                 throw new Exception($"Unsupported direction {dir}!");
             }
-            (int i, int j) next = (cur.i+dy, cur.j+dx);
-            if(Edges.Contains(next))
+            i += dy;
+            j += dx;
+            char c;
+            if(Spaces.Contains((i,j)))
             {
-                return false;
+                c = '.';
             }
-            else if(Spaces.Contains(next))
+            else if(Edges.Contains((i,j)))
             {
-                Spaces.Remove(next);
-                Spaces.Add((cur.i,cur.j));
-                if(cur.c == '@')
-                {
-                    Robot = next;
-                }
-                else {
-                    Boxes.Remove((cur.i,cur.j));
-                    Boxes.Add(next);
-                }
-                return true;
+                c = '#';
             }
-            else if (Boxes.Contains(next) && Move(dir, (next.i,next.j, 'O'))){
-                Spaces.Remove(next);
-                Spaces.Add((cur.i,cur.j));
-                if(cur.c == '@')
-                {
-                    Robot = next;
-                }
-                else {
-                    Boxes.Remove((cur.i,cur.j));
-                    Boxes.Add(next);
-                }
-                return true;
+            else if(scale == 1 && Boxes.Contains((i,j)))
+            {
+                c = 'O';
+            }
+            else if(Boxes.Contains((i,j)))
+            {
+                c = '[';
+            }
+            else if(Boxes.Contains((i,j-1)))
+            {
+                c = ']';
             }
             else {
+                throw new Exception($"Unsupported char at {i}, {j}!");
+            }     
+            return (i, j, c);
+        }
+        public bool CanMove(char dir, (int i, int j, char c) cur) {
+            if(cur.c == '.')
+            {
+                return true;
+            }
+            else if(cur.c == '#')
+            {
                 return false;
+            }
+            else if(cur.c == '@')
+            {
+                return CanMove(dir, GetNext(dir,cur.i,cur.j));
+            }
+            else 
+            {
+                // This is a box
+                if(dir == '<' || dir == '>')
+                {
+                    return CanMove(dir, GetNext(dir,cur.i,cur.j));
+                }
+                else {
+                    if(cur.c == '[')
+                    {
+                        return CanMove(dir, GetNext(dir,cur.i,cur.j)) && CanMove(dir, GetNext(dir,cur.i,cur.j+1));
+                    }
+                    else {
+                        return CanMove(dir, GetNext(dir,cur.i,cur.j)) && CanMove(dir, GetNext(dir,cur.i,cur.j-1));
+                    }
+                }
+            }
+        }
+        public void Move(char dir, (int i, int j, char c) cur) 
+        {
+            if(cur.c == '.' || cur.c == '#')
+            {
+                throw new Exception($"Cannot move immovable {cur.c}!");
+            }
+            else if(cur.c == '@')
+            {
+                var next = GetNext(dir, cur.i, cur.j);
+                if(next.c != '.')
+                {
+                    Move(dir, next);
+                }
+                Spaces.Remove((next.i,next.j));
+                Spaces.Add((cur.i,cur.j));
+                Robot = (next.i,next.j);
+                return;
+            }
+            else if(cur.c == '[')
+            {
+                // This is a box
+                if(dir == '<')
+                {
+                    var next = GetNext(dir, cur.i, cur.j);
+                    if(next.c != '.')
+                    {
+                        Move(dir, next);
+                    }
+                    Spaces.Remove((next.i,next.j));
+                    Spaces.Add((cur.i,cur.j+1));
+                    Boxes.Remove((cur.i,cur.j));
+                    Boxes.Add((next.i,next.j));
+                    return;
+                }
+                else if(dir == '>') {
+                    var next = GetNext(dir, cur.i, cur.j+1);
+                    if(next.c != '.')
+                    {
+                        Move(dir, next);
+                    }
+                    Spaces.Remove((next.i,next.j));
+                    Spaces.Add((cur.i,cur.j));
+                    Boxes.Remove((cur.i,cur.j));
+                    Boxes.Add((cur.i,cur.j+1));
+                    return;
+                }
+                else {
+                    var next = GetNext(dir, cur.i, cur.j);
+                    if(next.c == '[')
+                    {
+                        Move(dir, next);
+                    }
+                    else if(next.c == ']')
+                    {
+                        Move(dir, (next.i,next.j-1,'['));
+                    }
+                    var n = GetNext(dir, cur.i, cur.j+1);
+                    if(n.c == '[')
+                    {
+                        Move(dir, n);
+                    }
+                    Spaces.Remove((next.i,next.j));
+                    Spaces.Remove((next.i,next.j+1));
+                    Spaces.Add((cur.i,cur.j));
+                    Spaces.Add((cur.i,cur.j+1));
+                    Boxes.Remove((cur.i,cur.j));
+                    Boxes.Add((next.i,next.j));
+                    return;
+                }
+            }
+            else {
+                Move(dir, (cur.i,cur.j-1,'['));
+                return;
             }
         }
         public void Print()
@@ -119,7 +214,10 @@ namespace day15
                     }
                     else if(Boxes.Contains((i,j)))
                     {
-                        Console.Write('O');
+                        if(scale == 1)
+                            Console.Write('O');
+                        else if(scale == 2)
+                            Console.Write('[');
                     }
                     else if(Spaces.Contains((i,j)))
                     {

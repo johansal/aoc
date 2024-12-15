@@ -5,7 +5,7 @@ internal class Program
     private static void Main(string[] args)
     {
         var input = File.ReadAllLines("input");
-        Map map = new(1);
+        Map map = new(2);
 
         // Parse input: map & movement instructions separated by empty line
         bool isMap = true;
@@ -15,7 +15,7 @@ internal class Program
             if(string.IsNullOrEmpty(line))
             {
                 //Print map for test
-                map.Print();
+                //map.Print();
                 isMap = false;
             }
             else if(isMap)
@@ -29,18 +29,19 @@ internal class Program
                 //Parse instructions on this line
                 foreach(var c in line)
                 {
-                    map.Move(c, (map.Robot.i,map.Robot.j,'@'));
+                    if(map.CanMove(c, (map.Robot.i,map.Robot.j,'@')))
+                        map.Move(c, (map.Robot.i,map.Robot.j,'@'));
                     //Console.WriteLine($"Move {c}:");
                     //map.Print();
                 }
             }
         }
-        var part1 = 0;
+        var count = 0;
         foreach(var box in map.Boxes)
         {
-            part1 += Gps(box);
+            count += Gps(box);
         }
-        Console.WriteLine(part1);
+        Console.WriteLine(count);
     }
     private static int Gps((int i, int j) box)
     {
