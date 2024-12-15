@@ -1,16 +1,23 @@
 namespace day15
 {
-    public class Map
+    public class Map(int scale)
     {
+        private int scale = scale;
+        private (int h, int w) mapSize = (-1,-1);
         public List<(int i, int j)> Edges = [];
         public List<(int i, int j)> Boxes = [];
         public List<(int i, int j)> Spaces = [];
         public (int i, int j) Robot = (-1,-1);
 
-        public void Add(char cur, int i, int j, int scale) {
+        public void Add(char cur, int i, int j) {
+            j *= scale;
+            var limit = j + scale;
             if(cur == '#')
             {
-                Edges.Add((i,j));
+                for(var jScale = j; jScale < limit; jScale++)
+                {
+                    Edges.Add((i,jScale));
+                }
             }
             else if(cur == 'O')
             {
@@ -18,110 +25,116 @@ namespace day15
             }
             else if(cur == '.')
             {
-                Spaces.Add((i,j));
+                for(var jScale = j; jScale < limit; jScale++)
+                {
+                    Spaces.Add((i,jScale));
+                }
             }
             else if(cur == '@')
             {
                 Robot = (i,j);
+                if(scale == 2)
+                {
+                    Spaces.Add((i,j+1));
+                }
+            }
+
+            //Update map size
+            if(i > mapSize.h)
+                mapSize.h = i;
+            if(j + scale > mapSize.w)
+                mapSize.w = j + scale;
+        }
+        public bool Move(char dir, (int i, int j, char c) cur) {
+            int dx;
+            int dy;
+            if(dir == '>')
+            {
+                dx = 1;
+                dy = 0;
+            }
+            else if(dir == '<')
+            {
+                dx = -1;
+                dy = 0;
+            }
+            else if(dir == 'v')
+            {
+                dy = 1;
+                dx = 0;
+            }
+            else if(dir == '^')
+            {
+                dy = -1;
+                dx = 0;
+            }
+            else {
+                throw new Exception($"Unsupported direction {dir}!");
+            }
+            (int i, int j) next = (cur.i+dy, cur.j+dx);
+            if(Edges.Contains(next))
+            {
+                return false;
+            }
+            else if(Spaces.Contains(next))
+            {
+                Spaces.Remove(next);
+                Spaces.Add((cur.i,cur.j));
+                if(cur.c == '@')
+                {
+                    Robot = next;
+                }
+                else {
+                    Boxes.Remove((cur.i,cur.j));
+                    Boxes.Add(next);
+                }
+                return true;
+            }
+            else if (Boxes.Contains(next) && Move(dir, (next.i,next.j, 'O'))){
+                Spaces.Remove(next);
+                Spaces.Add((cur.i,cur.j));
+                if(cur.c == '@')
+                {
+                    Robot = next;
+                }
+                else {
+                    Boxes.Remove((cur.i,cur.j));
+                    Boxes.Add(next);
+                }
+                return true;
+            }
+            else {
+                return false;
             }
         }
-        public void Move(char c) {
-            if(c == '>')
+        public void Print()
+        {
+            for(int i = 0; i <= mapSize.h; i++)
             {
-                var edge = Edges.Where(e => e.i == Robot.i && e.j > Robot.j).OrderBy(e => e.j).First();
-                try {
-                    var space = Spaces.Where(s => s.i == Robot.i && s.j > Robot.j && s.j < edge.j).OrderBy(s => s.j).First();
-                    Spaces.Remove(space);
-                    Spaces.Add(Robot);
-                    if(Robot.j + 1 == space.j)
-                    {              
-                        Robot = space;
+                for(int j = 0; j < mapSize.w; j++)
+                {
+                    if(Edges.Contains((i,j)))
+                    {
+                        Console.Write('#');
+                    }
+                    else if(Boxes.Contains((i,j)))
+                    {
+                        Console.Write('O');
+                    }
+                    else if(Spaces.Contains((i,j)))
+                    {
+                        Console.Write('.');
+                    }
+                    else if (Robot.i == i && Robot.j == j) {
+                        Console.Write('@');
                     }
                     else {
-                        //Move box
-                        var box = (Robot.i, Robot.j + 1);
-                        Boxes.Remove(box);
-                        Boxes.Add(space);
-                        Robot = box;
+                        Console.Write(']');
                     }
                 }
-                catch(InvalidOperationException)
-                {
-                    //No space, do nothing
-                }
+                Console.Write("\n");
             }
-            else if(c == '<')
-            {
-                var edge = Edges.Where(e => e.i == Robot.i && e.j < Robot.j).OrderByDescending(e => e.j).First();
-                try {
-                    var space = Spaces.Where(s => s.i == Robot.i && s.j < Robot.j && s.j > edge.j).OrderByDescending(s => s.j).First();
-                    Spaces.Remove(space);
-                    Spaces.Add(Robot);
-                    if(Robot.j - 1 == space.j)
-                    {              
-                        Robot = space;
-                    }
-                    else {
-                        //Move box
-                        var box = (Robot.i, Robot.j - 1);
-                        Boxes.Remove(box);
-                        Boxes.Add(space);
-                        Robot = box;
-                    }
-                }
-                catch(InvalidOperationException)
-                {
-                    //No space, do nothing
-                }
-            }
-            else if(c == 'v')
-            {
-                var edge = Edges.Where(e => e.j == Robot.j && e.i > Robot.i).OrderBy(e => e.j).First();
-                try {
-                    var space = Spaces.Where(s => s.j == Robot.j && s.i > Robot.i && s.i < edge.i).OrderBy(s => s.i).First();
-                    Spaces.Remove(space);
-                    Spaces.Add(Robot);
-                    if(Robot.i + 1 == space.i)
-                    {              
-                        Robot = space;
-                    }
-                    else {
-                        //Move box
-                        var box = (Robot.i + 1, Robot.j);
-                        Boxes.Remove(box);
-                        Boxes.Add(space);
-                        Robot = box;
-                    }
-                }
-                catch(InvalidOperationException)
-                {
-                    //No space, do nothing
-                }
-            }
-            else if(c == '^')
-            {
-                var edge = Edges.Where(e => e.j == Robot.j && e.i < Robot.i).OrderByDescending(e => e.i).First();
-                try {
-                    var space = Spaces.Where(s => s.j == Robot.j && s.i < Robot.i && s.i > edge.i).OrderByDescending(s => s.i).First();
-                    Spaces.Remove(space);
-                    Spaces.Add(Robot);
-                    if(Robot.i - 1 == space.i)
-                    {              
-                        Robot = space;
-                    }
-                    else {
-                        //Move box
-                        var box = (Robot.i - 1, Robot.j);
-                        Boxes.Remove(box);
-                        Boxes.Add(space);
-                        Robot = box;
-                    }
-                }
-                catch(InvalidOperationException)
-                {
-                    //No space, do nothing
-                }
-            }
+            Console.WriteLine();
         }
     }
 }
