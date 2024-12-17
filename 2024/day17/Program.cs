@@ -6,7 +6,8 @@ public class Program
     {
         var input = File.ReadAllLines("input");
         (int[] registers, string program) = Parse(input);
-        Console.WriteLine(Run(program, registers));
+        var output = Run(program, registers);
+        Console.WriteLine(output);
     }
     public static (int[] reg, string program) Parse(string[] input)
     {
@@ -93,6 +94,7 @@ public class Program
                 }
             case 5:
                 {
+                    Console.WriteLine($"Registers: {reg[0]}, {reg[1]}, {reg[2]}");
                     //out
                     output = operand % 8;
                     break;
