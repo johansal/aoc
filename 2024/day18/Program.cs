@@ -11,12 +11,25 @@ public class Program
         int simulationSteps = param.sS;
         
         Pos start = new(0,0), end = new(gridSize,gridSize);
-        //Parse boulder coordinates to map 
-        var boulders = ParseBoulders(input, simulationSteps);
-        PrintMap(gridSize, boulders, []);
-        Console.WriteLine($"Part 1: {Solve(start, end, boulders, gridSize)}");
+        var map = new bool[gridSize+1, gridSize+1];
+        //Parse boulder coordinates to map
+        for(int i = 0; i < gridSize+1; i++)
+        {
+            for(int j = 0; j < gridSize+1; j++)
+            {
+                map[i,j] = true;
+            }
+        }
+        foreach (var line in input.Take(simulationSteps))
+        {
+            // list has x,y coordinates (col, line)
+            var strB = line.Split(",");
+            map[int.Parse(strB[1]),int.Parse(strB[0])] = false;
+        }
+        PrintMap(map, gridSize + 1);
+        Console.WriteLine($"Part 1: {Solve(start, end, map, gridSize)}");
     }
-    private static int Solve(Pos start, Pos end, HashSet<Pos> boulders, int gridSize)
+    private static int Solve(Pos start, Pos end, bool[,] map, int gridSize)
     {
         // Dijkstra from d16, without the direction component
         // Changed to A* with manhattan distance heuristic
@@ -31,8 +44,9 @@ public class Program
         // Dequeue node with lowest pathLength, if any
         while (q.TryDequeue(out var c, out var priority))
         {   
-            var current = c.position;
-            var pathLength = c.pathLength;
+            var (current, pathLength) = c;
+            Console.WriteLine($"Checking {current.Col},{current.Row} with prio {priority}");
+
 
             if (current == end) {
                 return pathLength;
@@ -50,28 +64,28 @@ public class Program
             // queue next node ahead, on left and on right side, if they are not boulders or out of bounds
             var next = current.Move(Compas.N);
             var nextPathLength = pathLength + 1;
-            if (BoundaryCheck(next, gridSize) && boulders.Contains(next) == false)
+            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
             }
 
             next = current.Move(Compas.S);
-            if (BoundaryCheck(next, gridSize) && boulders.Contains(next) == false)
+            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
             }
         
             next = current.Move(Compas.E);
-            if (BoundaryCheck(next, gridSize) && boulders.Contains(next) == false)
+            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
             }
 
             next = current.Move(Compas.W);
-            if (BoundaryCheck(next, gridSize) && boulders.Contains(next) == false)
+            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
@@ -79,39 +93,23 @@ public class Program
         }
         return -1;
     }
-
-    private static HashSet<Pos> ParseBoulders(string[] input, int simulationSteps) {
-        HashSet<Pos> boulders = [];
-        foreach (var line in input.Take(simulationSteps))
-        {
-            var strB = line.Split(',');
-            // list has x,y coordinates (col, line)
-            boulders.Add(new(int.Parse(strB[1]),int.Parse(strB[0])));
-        }
-        return boulders;
+    private static bool InBounds(Pos c, int gridSize)
+    {
+        return c.Col >= 0 && c.Row >= 0 && c.Col <= gridSize && c.Row <= gridSize;
     }
     private static int Heuristic(Pos c, Pos end)
     {
         //use manhattan distance as heuristic
         return end.Col - c.Col + (end.Row - c.Row);
     }
-    private static bool BoundaryCheck(Pos p, int gridLen)
-    {
-        return p.Col >= 0 && p.Row >= 0 && p.Col <= gridLen && p.Row <= gridLen;
-    }
-    private static void PrintMap(int gridSize, HashSet<Pos> boulders, HashSet<Pos> path)
+    private static void PrintMap(bool[,] map, int len)
     {
         Console.WriteLine();
-        for(int i = 0; i <= gridSize; i++)
+        for(int i = 0; i < len; i++)
         {
-            for (int j = 0; j <= gridSize; j++)
+            for (int j = 0; j < len; j++)
             {
-                Pos p = new(i,j);
-                if(path.Contains(p))
-                {
-                    Console.Write("o");
-                }
-                else if(boulders.Contains(p))
+                if(map[i,j] == false)
                 {
                     Console.Write("#");
                 }
