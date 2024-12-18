@@ -31,11 +31,12 @@ public class Program
         Console.WriteLine($"Part 1: {Solve(start, end, map, height)}");
 
         // Binary search to find first boulder to cut of path
-        int low = simulationSteps;
+        int low = simulationSteps + 1;
         int high = input.Length;
-        while(high-low > 1)
+        while(low != high)
         {
-            int next = low+((high - low)/2);
+            // calculate mid point by (l+h)/2
+            int guess = (low + high) >> 1;
             //reset map with correct boulders
             for(int i = 0; i < height+1; i++)
             {
@@ -44,20 +45,24 @@ public class Program
                     map[i,j] = true;
                 }
             }
-            foreach (var line in input.Take(next))
+            foreach (var line in input.Take(guess))
             {
                 var strB = line.Split(",");
                 map[int.Parse(strB[1]),int.Parse(strB[0])] = false;
             }
+            //if no path is found, set new known cealing to guessed value
             if(Solve(start, end, map, height) == -1)
             {
-                high = next;
+                high = guess;
             }
+            //if path is still found, boulders block our way at guess+1 or higher 
             else {
-                low = next;
+                low = guess + 1;
             }
         }
-        Console.WriteLine($"Part 2: {input[low]}"); //works for test and input but might have one off error 
+        //low was the amount of boulders to take so the actual coordinates for first blocking 
+        //boulder is at index low-1
+        Console.WriteLine($"Part 2: {input[low-1]}");
     }
     private static int Solve(Pos start, Pos end, bool[,] map, int h)
     {
