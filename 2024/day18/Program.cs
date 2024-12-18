@@ -3,19 +3,20 @@ public class Program
 {
     private static void Main(string[] args)
     {
-        //(string[] arr, int gS, int sS) param = (File.ReadAllLines("test"), 6, 12); //test
-        (string[] arr, int gS, int sS) param = (File.ReadAllLines("input"), 70, 1024); //prod
+        //(string[] arr, int h, int sS) = (File.ReadAllLines("test"), 6, 12); //test
+        (string[] arr, int h, int sS) = (File.ReadAllLines("input"), 70, 1024); //prod
 
-        var input = param.arr;
-        int gridSize = param.gS;
-        int simulationSteps = param.sS;
+        var input = arr;
+        int height = h;
+        int simulationSteps = sS;
         
-        Pos start = new(0,0), end = new(gridSize,gridSize);
-        var map = new bool[gridSize+1, gridSize+1];
+        Pos start = new(0,0), end = new(height,height);
+        var map = new bool[height+1, height+1];
+        
         //Parse boulder coordinates to map
-        for(int i = 0; i < gridSize+1; i++)
+        for(int i = 0; i < height+1; i++)
         {
-            for(int j = 0; j < gridSize+1; j++)
+            for(int j = 0; j < height+1; j++)
             {
                 map[i,j] = true;
             }
@@ -26,23 +27,39 @@ public class Program
             var strB = line.Split(",");
             map[int.Parse(strB[1]),int.Parse(strB[0])] = false;
         }
-        Console.WriteLine($"Part 1: {Solve(start, end, map, gridSize)}");
+        // Find shortest route
+        Console.WriteLine($"Part 1: {Solve(start, end, map, height)}");
 
-
-        var boulder = input[simulationSteps].Split(",");
-        map[int.Parse(boulder[1]),int.Parse(boulder[0])] = false;
-        while(Solve(start, end, map, gridSize) != -1)
+        // Binary search to find first boulder to cut of path
+        int low = simulationSteps;
+        int high = input.Length;
+        while(high-low > 1)
         {
-            simulationSteps++;
-            boulder = input[simulationSteps].Split(",");
-            map[int.Parse(boulder[1]),int.Parse(boulder[0])] = false;
-            Console.WriteLine(simulationSteps);
+            int next = low+((high - low)/2);
+            //reset map with correct boulders
+            for(int i = 0; i < height+1; i++)
+            {
+                for(int j = 0; j < height+1; j++)
+                {
+                    map[i,j] = true;
+                }
+            }
+            foreach (var line in input.Take(next))
+            {
+                var strB = line.Split(",");
+                map[int.Parse(strB[1]),int.Parse(strB[0])] = false;
+            }
+            if(Solve(start, end, map, height) == -1)
+            {
+                high = next;
+            }
+            else {
+                low = next;
+            }
         }
-        Console.WriteLine($"Part 2: {input[simulationSteps]}");
-
-
+        Console.WriteLine($"Part 2: {input[low]}"); //works for test and input but might have one off error 
     }
-    private static int Solve(Pos start, Pos end, bool[,] map, int gridSize)
+    private static int Solve(Pos start, Pos end, bool[,] map, int h)
     {
         // Dijkstra from d16, without the direction component
         // Changed to A* with manhattan distance heuristic
@@ -76,28 +93,28 @@ public class Program
             // queue next node ahead, on left and on right side, if they are not boulders or out of bounds
             var next = current.Move(Compas.N);
             var nextPathLength = pathLength + 1;
-            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
+            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
             }
 
             next = current.Move(Compas.S);
-            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
+            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
             }
         
             next = current.Move(Compas.E);
-            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
+            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
             }
 
             next = current.Move(Compas.W);
-            if (InBounds(next, gridSize) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
+            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
             {
                 var nextPriority = nextPathLength + Heuristic(next, end);
                 q.Enqueue((next, nextPathLength), nextPriority);
