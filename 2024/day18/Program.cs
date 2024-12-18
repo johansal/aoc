@@ -26,8 +26,21 @@ public class Program
             var strB = line.Split(",");
             map[int.Parse(strB[1]),int.Parse(strB[0])] = false;
         }
-        PrintMap(map, gridSize + 1);
         Console.WriteLine($"Part 1: {Solve(start, end, map, gridSize)}");
+
+
+        var boulder = input[simulationSteps].Split(",");
+        map[int.Parse(boulder[1]),int.Parse(boulder[0])] = false;
+        while(Solve(start, end, map, gridSize) != -1)
+        {
+            simulationSteps++;
+            boulder = input[simulationSteps].Split(",");
+            map[int.Parse(boulder[1]),int.Parse(boulder[0])] = false;
+            Console.WriteLine(simulationSteps);
+        }
+        Console.WriteLine($"Part 2: {input[simulationSteps]}");
+
+
     }
     private static int Solve(Pos start, Pos end, bool[,] map, int gridSize)
     {
@@ -45,7 +58,6 @@ public class Program
         while (q.TryDequeue(out var c, out var priority))
         {   
             var (current, pathLength) = c;
-            Console.WriteLine($"Checking {current.Col},{current.Row} with prio {priority}");
 
 
             if (current == end) {
