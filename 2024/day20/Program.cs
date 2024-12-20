@@ -1,7 +1,7 @@
 ﻿namespace day20;
 public class Program
 {
-    private static void Main(string[] args)
+    private static void Main()
     {
         var input = File.ReadAllLines("input");
         Pos start = new(0,0), end = new(0,0);
@@ -30,57 +30,89 @@ public class Program
             }
         }
         // Find shortest route
-        int baseline = Solve(start, end, map, h-1);
-        Console.WriteLine($"Baseline: {baseline}");
-        Dictionary<int, int> timeSaved = [];
-        // Remove one boulder and see how much time is saved
-        foreach(Pos b in boulders) {
-            map[b.Col, b.Row] = true;
-            int time = Solve(start, end, map, h-1);
-            var save = baseline - time;
-            //Console.WriteLine($"Removing {b.Col},{b.Row} got {time}, saving {save}");
-            if (time < 0 || save <= 0)
-            {
-                // no time was saved
-            }
-            else if(timeSaved.TryGetValue(save, out var value)) 
-            {
-                timeSaved[save] = value + 1;
-            }
-            else {
-                timeSaved[save] = 1;
-            }
-            map[b.Col, b.Row] = false;
-        }
-        var part1 = 0;
-        foreach(int i in timeSaved.Keys.Where(x => x >= 100))
-        {
-            Console.WriteLine($"{timeSaved[i]} cheats that save {i} picoseconds.");
-            part1 += timeSaved[i];
-        }
-        Console.WriteLine(part1);
-
+        var path = Djikstra(start, end, map);
+        //Calculate cheats
+        var part1 = Cheats(path, map.GetLength(0), 2, 100);
+        Console.WriteLine($"Part1: {part1}");
+        var part2 = Cheats(path, map.GetLength(0), 20, 100);
+        Console.WriteLine($"Part2: {part2}");
     }
-    private static int Solve(Pos start, Pos end, bool[,] map, int h)
+    private static int Cheats(Dictionary<Pos, int> path, int h, int maxLen, int minSave)
     {
-        // Dijkstra from d16, without the direction component
-        // Changed to A* with manhattan distance heuristic
+        List<int> saves = [];
+        foreach(var p in path)
+        {
+            saves.AddRange(FindShortCuts(p.Key, path, h, p.Value + maxLen).Values.Where(x => x >= minSave).ToList());
+        }
+        /*foreach(var g in saves.GroupBy(x=> x).OrderBy(x => x.Key))
+        {
+            Console.WriteLine($"{g.Count()} cheats that save {g.Key}");
+        }*/
+        return saves.Count;
+    }
+    private static Dictionary<Pos, int> FindShortCuts(Pos start, Dictionary<Pos, int> path, int h, int maxLen)
+    {
+        Dictionary<Pos, int> shortcuts = [];
+        Dictionary<Pos, int> distances = [];
+
+        // BFS queue
+        Queue<Pos> q = new();
+        q.Enqueue(start);
+        distances[start] = path[start];
+
+        while(q.Count > 0) {
+            var cur = q.Dequeue();
+
+            //Check if we are back on path
+            if(cur != start && path.ContainsKey(cur))
+            {
+                //if distance to path node is smaller than the existing distance on path,
+                //we found a shortcut
+                if(distances[cur] < path[cur])
+                {
+                    // return how much our shortcut saves
+                    int saves = path[cur] - distances[cur];
+                    if(shortcuts.ContainsKey(cur) == false || shortcuts[cur] < saves)
+                    {
+                        shortcuts[cur] = saves;
+                    }
+                }
+            }
+
+            var nextDistance = distances[cur] + 1;
+            foreach(var dir in Compas.Directions())
+            {
+                var next = cur.Move(dir);
+                if (nextDistance <= maxLen && InBounds(next, h) && distances.ContainsKey(next) == false)
+                {
+                    distances[next] = nextDistance;
+                    q.Enqueue(next); 
+                }
+            }
+        }
+        return shortcuts;
+    }
+    private static Dictionary<Pos, int> Djikstra(Pos start, Pos end, bool[,] map)
+    {
         // Add start position to queue
-        var q = new PriorityQueue<(Pos position, int pathLength), int>();
-        var startH = Heuristic(start,end);
-        q.Enqueue((start, 0), startH);
+        var q = new PriorityQueue<(Pos position, Dictionary<Pos, int>), int>();
+        var shortestPaths = new Dictionary<Pos, int>
+        {
+            [start] = 0
+        };
+        q.Enqueue((start, shortestPaths), 0);
         
         // Track positions visited and shortest path to it from start
         var visited = new Dictionary<Pos, int>();
 
         // Dequeue node with lowest pathLength, if any
-        while (q.TryDequeue(out var c, out var priority))
+        while (q.TryDequeue(out var c, out var pathLength))
         {   
-            var (current, pathLength) = c;
+            var (current, moves) = c;
 
-
+            //check if end
             if (current == end) {
-                return pathLength;
+                return moves;
             }
 
             // check if we have visited this node already with smaller pathLength
@@ -92,67 +124,28 @@ public class Program
             // add this node to visited
             visited[current] = pathLength;
  
-            // queue next node ahead, on left and on right side, if they are not boulders or out of bounds
-            var next = current.Move(Compas.N);
+            // queue next node ahead if not boulder or out of bounds
             var nextPathLength = pathLength + 1;
-            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
+            foreach(var dir in Compas.Directions())
             {
-                var nextPriority = nextPathLength + Heuristic(next, end);
-                q.Enqueue((next, nextPathLength), nextPriority);
+                var next = current.Move(dir);
+                if (InBounds(next, map.GetLength(0)) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
+                {
+                    var nextMoves = new Dictionary<Pos, int>(moves)
+                    {
+                        [next] = nextPathLength
+                    };
+                    q.Enqueue((next, nextMoves), nextPathLength);
+                }
             }
-
-            next = current.Move(Compas.S);
-            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
-            {
-                var nextPriority = nextPathLength + Heuristic(next, end);
-                q.Enqueue((next, nextPathLength), nextPriority);
-            }
-        
-            next = current.Move(Compas.E);
-            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
-            {
-                var nextPriority = nextPathLength + Heuristic(next, end);
-                q.Enqueue((next, nextPathLength), nextPriority);
-            }
-
-            next = current.Move(Compas.W);
-            if (InBounds(next, h) && map[next.Row, next.Col] && visited.ContainsKey(next) == false)
-            {
-                var nextPriority = nextPathLength + Heuristic(next, end);
-                q.Enqueue((next, nextPathLength), nextPriority);
-            }      
         }
-        return -1;
+        return [];
     }
     private static bool InBounds(Pos c, int gridSize)
     {
-        return c.Col >= 0 && c.Row >= 0 && c.Col <= gridSize && c.Row <= gridSize;
-    }
-    private static int Heuristic(Pos c, Pos end)
-    {
-        //use manhattan distance as heuristic
-        return end.Col - c.Col + (end.Row - c.Row);
-    }
-    private static void PrintMap(bool[,] map, int len)
-    {
-        Console.WriteLine();
-        for(int i = 0; i < len; i++)
-        {
-            for (int j = 0; j < len; j++)
-            {
-                if(map[i,j] == false)
-                {
-                    Console.Write("#");
-                }
-                else {
-                    Console.Write(".");
-                }
-            }
-            Console.Write("\n");
-        }
+        return c.Col >= 0 && c.Row >= 0 && c.Col < gridSize && c.Row < gridSize;
     }
 }
-
 internal record Compas(int dx, int dy)
 {
     public Compas TurnL()
@@ -168,6 +161,10 @@ internal record Compas(int dx, int dy)
     public static readonly Compas W = new(0, -1);
     public static readonly Compas N = new(-1, 0);
     public static readonly Compas S = new(1, 0);
+    public static Compas[] Directions()
+    {
+        return [N, W, E, S];
+    }
 }
 internal record Pos(int Row, int Col)
 {
