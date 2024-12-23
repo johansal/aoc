@@ -24,7 +24,15 @@
         var max = BuildMaxCliq(connections);
         Console.WriteLine(string.Join(",",max.Order()));        
     }
-    //neat grap algo to find largest set of connected nodes
+    // neat grap algo to find largest set of connected nodes
+    // put all vertices to P, then copy P and for each vertice, add it to R, recurse,
+    //algorithm BronKerbosch1(R, P, X) is
+    //  if P and X are both empty then
+    //      report R as a maximal clique
+    //  for each vertex v in P do
+    //      BronKerbosch1(R ⋃ {v}, P ⋂ N(v), X ⋂ N(v))
+    //      P := P \ {v}
+    //      X := X ⋃ {v}
     private static void BronKerbosch(HashSet<string> R, HashSet<string> P, HashSet<string> X, List<List<string>> cliques, Dictionary<string,List<string>> connections)
     {
         if (P.Count != 0 && X.Count != 0)
