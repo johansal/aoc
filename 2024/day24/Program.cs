@@ -2,7 +2,7 @@
 {
     private static void Main(string[] args)
     {
-        var input = File.ReadAllLines("test");
+        var input = File.ReadAllLines("input");
         Dictionary<string,bool> wires = [];
         List<string[]> backlog = [];
 
@@ -30,15 +30,28 @@
         }
         while(backlog.Count != 0)
         {
+            Console.WriteLine($"Backlog size {backlog.Count}");
+            List<string[]> done = [];
             foreach(var w in backlog)
             {
                 if(wires.ContainsKey(w[0]) && wires.ContainsKey(w[2]))
                 {
                     wires[w[4]] = Logic(wires[w[0]], w[1], wires[w[2]]);
-                    backlog.Remove(w);
+                    done.Add(w);
                 }
             }
+            foreach(var w in done)
+            {
+                backlog.Remove(w);
+            }
         }
+        ulong part1 = 0;
+        foreach(var w in wires.Keys.Where(x => x.StartsWith('z')).OrderByDescending(x => x))
+        {
+            //Console.WriteLine($"{w} {wires[w]}");
+            part1 = (part1 << 1) | (wires[w] ? 1UL : 0UL);
+        }
+        Console.WriteLine(part1);
     }
     private static bool Logic(bool wire, string port, bool wire2)
     {
