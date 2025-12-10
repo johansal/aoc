@@ -53,7 +53,7 @@ public static class GeometryHelper
                 }
             }
             
-            // Ray casting algorithm
+            // Ray casting algorithm, identifies if we cross an edge
             if (((pi.y > point.y) != (pj.y > point.y)) &&
                 (point.x < (pj.x - pi.x) * (point.y - pi.y) / (pj.y - pi.y) + pi.x))
             {
@@ -70,7 +70,7 @@ public static class GeometryHelper
     /// </summary>
     public static bool RectangleInsidePolygon((int x, int y) p1, (int x, int y) p2, List<(int x, int y)> polygon)
     {
-        // Get all four corners of the rectangle
+        // Define corners of the rectangle
         var corners = new (int x, int y)[]
         {
             (p1.x, p1.y),
@@ -88,20 +88,20 @@ public static class GeometryHelper
             }
         }
 
+        // Define rectangle edges
+        var rectangleEdges = new ( (int x, int y) start, (int x, int y) end )[]
+        {
+            ( (p1.x, p1.y), (p1.x, p2.y) ),
+            ( (p1.x, p2.y), (p2.x, p2.y) ),
+            ( (p2.x, p2.y), (p2.x, p1.y) ),
+            ( (p2.x, p1.y), (p1.x, p1.y) )
+        };
+
         // Walk the polygon edges to ensure rectangle edges do not cross polygon edges
         for (int i = 0; i < polygon.Count; i++)
         {
             var pA = polygon[i];
             var pB = polygon[(i + 1) % polygon.Count];
-
-            // Check each edge of the rectangle
-            var rectangleEdges = new ( (int x, int y) start, (int x, int y) end )[]
-            {
-                ( (p1.x, p1.y), (p1.x, p2.y) ),
-                ( (p1.x, p2.y), (p2.x, p2.y) ),
-                ( (p2.x, p2.y), (p2.x, p1.y) ),
-                ( (p2.x, p1.y), (p1.x, p1.y) )
-            };
 
             foreach (var edge in rectangleEdges)
             {
