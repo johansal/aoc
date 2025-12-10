@@ -1,4 +1,7 @@
-﻿
+﻿using System;
+using Google.OrTools.Init;
+using Google.OrTools.LinearSolver;
+
 IEnumerable<List<T>> GetPermutations<T>(List<T> items, int length)
 {
     if (length == 0)
@@ -29,6 +32,54 @@ List<int> ToggleIndicatorLights(List<int> current, List<int> button)
     }
     result.Sort();
     return result;
+}
+
+int SolveJoltageSystemGoogleORTools(List<List<int>> buttons, List<int> target)
+{
+    // Create solver, sat backend works for this, CBS did not
+    Solver solver = Solver.CreateSolver("SAT_INTEGER_PROGRAMMING");
+    if (solver == null)
+    {
+        throw new Exception("Could not create solver.");
+    }
+
+    // Create variables
+    var buttonVars = new List<Variable>();
+    for (int i = 0; i < buttons.Count; i++)
+    {
+        buttonVars.Add(solver.MakeIntVar(0.0, double.PositiveInfinity, $"button_{i}"));
+    }
+
+    // Create constraints for each target joltage
+    for (int j = 0; j < target.Count; j++)
+    {
+        var constraint = solver.MakeConstraint(target[j], target[j], $"target_{j}");
+        for (int i = 0; i < buttons.Count; i++)
+        {
+            if (buttons[i].Contains(j))
+            {
+                constraint.SetCoefficient(buttonVars[i], 1);
+            }
+        }
+    }
+
+    // Objective: minimize total button presses
+    var objective = solver.Objective();
+    foreach (var var in buttonVars)
+    {
+        objective.SetCoefficient(var, 1);
+    }
+    objective.SetMinimization();
+
+    // Solve the system
+    var resultStatus = solver.Solve();
+
+    if (resultStatus != Solver.ResultStatus.OPTIMAL)
+    {
+        throw new Exception("The problem does not have an optimal solution.");
+    }
+
+    return (int)objective.Value();
 }
 
 var input = File.ReadAllLines("input");
@@ -95,6 +146,10 @@ foreach (var line in input)
             break;
         }
     }
+
+    // Solve joltage system
+    var temp = SolveJoltageSystemGoogleORTools(buttons, targetJoltages);
+    part2 += temp;
 }
 
 Console.WriteLine(part1);
